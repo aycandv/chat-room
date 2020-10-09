@@ -2,6 +2,7 @@ package com.avit;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.HashSet;
 
 public class ServerThread extends Thread {
 
@@ -9,6 +10,7 @@ public class ServerThread extends Thread {
     private final Server server;
     private String name = null;
     private OutputStream outputStream;
+    private HashSet<String> groupSet = new HashSet<>();
 
     public ServerThread(Server server, Socket clientSocket) {
         this.server = server;
@@ -44,6 +46,8 @@ public class ServerThread extends Thread {
                     handleLogin(outputStream, tokens);
                 } else if ("msg".equalsIgnoreCase(cmd)) {
                     handleMessage(tokens);
+                } else if ("join".equalsIgnoreCase(cmd)) {
+                    handleJoin(tokens);
                 }
                 else {
                     String msg = "Unknown command: " + cmd + "\n";
@@ -56,18 +60,46 @@ public class ServerThread extends Thread {
         clientSocket.close();
     }
 
+    private void handleJoin(String[] tokens) {
+        if (tokens.length > 1) {
+            String groupName = tokens[1];
+            groupSet.add(groupName);
+        }
+    }
+
+    private boolean isMemberOf(String group) {
+        return groupSet.contains(group);
+    }
+
     private void handleMessage(String[] tokens) throws IOException {
         String targetUser = tokens[1];
 
+        boolean isGroupMsg = targetUser.charAt(0) == '#';
+
         for (ServerThread client : server.getClientList()) {
-            if (client.getClientName().equalsIgnoreCase(targetUser)) {
-                StringBuilder msg = new StringBuilder(" ");
-                for (int i = 2; i < tokens.length; i++) {
-                    msg.append(" ").append(tokens[i]);
+            if (isGroupMsg) {
+                if (client.isMemberOf(targetUser)) {
+                    StringBuilder msg = new StringBuilder(" ");
+                    for (int i = 2; i < tokens.length; i++) {
+                        msg.append(" ").append(tokens[i]);
+                    }
+                    String out = "(" + tokens[1] + ") " + this.getClientName() + " >" + msg + "\n";
+                    if (!client.getClientName().equals(this.getClientName()) && client.getClientName() != null) client.send(out);
+                    out = "(" + tokens[1] + ") You >" + msg + "\n";
+                    this.send(out);
                 }
-                String out = this.getClientName() + ">" + msg + "\n";
-                client.send(out);
             }
+            else {
+                if (client.getClientName().equalsIgnoreCase(targetUser)) {
+                    StringBuilder msg = new StringBuilder(" ");
+                    for (int i = 2; i < tokens.length; i++) {
+                        msg.append(" ").append(tokens[i]);
+                    }
+                    String out = this.getClientName() + ">" + msg + "\n";
+                    client.send(out);
+                }
+            }
+
         }
     }
 
