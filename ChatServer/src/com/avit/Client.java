@@ -2,7 +2,6 @@ package com.avit;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.List;
 
 public class Client extends Thread {
 
@@ -28,7 +27,9 @@ public class Client extends Thread {
     private void handleClient() throws IOException, InterruptedException {
         InputStream inputStream = clientSocket.getInputStream();
         this.outputStream = clientSocket.getOutputStream();
-        outputStream.write("Welcome to the chat room.\n".getBytes());
+        outputStream.write("============================\n".getBytes());
+        outputStream.write("| Welcome to the chat room |\n".getBytes());
+        outputStream.write("============================\n\n".getBytes());
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         String line;
@@ -36,7 +37,8 @@ public class Client extends Thread {
             String[] tokens = line.split(" ");
             if (tokens.length > 0) {
                 String cmd = tokens[0];
-                if ("quit".equalsIgnoreCase(cmd)) {
+                if ("logoff".equalsIgnoreCase(cmd) || "quit".equalsIgnoreCase(cmd)) {
+                    handleLogoff();
                     break;
                 } else if ("login".equalsIgnoreCase(cmd)) {
                     handleLogin(outputStream, tokens);
@@ -49,6 +51,20 @@ public class Client extends Thread {
 
         }
 
+        clientSocket.close();
+    }
+
+    private void handleLogoff() throws IOException {
+        server.getClientList().remove(this);
+        this.send("You are logged off\n");
+        System.out.println(this.getClientName() + " logged off");
+        String offlineMsg = this.getClientName() + " logged off\n";
+        for (Client client : server.getClientList()) {
+            if (client.getClientName() != null) {
+                if (client.getClientName().equals(this.name)) continue;
+                client.send(offlineMsg);
+            }
+        }
         clientSocket.close();
     }
 
@@ -69,15 +85,20 @@ public class Client extends Thread {
 
                 if (server.getClientList().size() > 1) {
                     for (Client client : server.getClientList()) {
-                        //if (client.getClientName().equals(this.name)) continue;
-                        send(client.getClientName() + " is online\n");
+                        if (client.getClientName() != null) {
+                            if (client.getClientName().equals(this.name)) continue;
+                            send(client.getClientName() + " is online\n");
+                        }
                     }
                 }
 
                 String onlineMsg = name + " logged in\n";
                 for (Client client : server.getClientList()) {
-                    if (client.getClientName().equals(this.name)) continue;
-                    client.send(onlineMsg);
+                    if (client.getClientName() != null) {
+                        if (client.getClientName().equals(this.name)) continue;
+                        client.send(onlineMsg);
+                    }
+
                 }
             } else {
                 String msg = "error login\n";
