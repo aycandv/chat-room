@@ -42,6 +42,8 @@ public class ServerThread extends Thread {
                     break;
                 } else if ("login".equalsIgnoreCase(cmd)) {
                     handleLogin(outputStream, tokens);
+                } else if ("msg".equalsIgnoreCase(cmd)) {
+                    handleMessage(tokens);
                 }
                 else {
                     String msg = "Unknown command: " + cmd + "\n";
@@ -52,6 +54,21 @@ public class ServerThread extends Thread {
         }
 
         clientSocket.close();
+    }
+
+    private void handleMessage(String[] tokens) throws IOException {
+        String targetUser = tokens[1];
+
+        for (ServerThread client : server.getClientList()) {
+            if (client.getClientName().equalsIgnoreCase(targetUser)) {
+                StringBuilder msg = new StringBuilder(" ");
+                for (int i = 2; i < tokens.length; i++) {
+                    msg.append(" ").append(tokens[i]);
+                }
+                String out = this.getClientName() + ">" + msg + "\n";
+                client.send(out);
+            }
+        }
     }
 
     private void handleLogoff() throws IOException {
