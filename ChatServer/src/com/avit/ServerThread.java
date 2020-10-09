@@ -55,7 +55,8 @@ public class ServerThread extends Thread {
     }
 
     private void handleLogoff() throws IOException {
-        server.getClientList().remove(this);
+
+        server.removeClient(this);
         this.send("You are logged off\n");
         System.out.println(this.getClientName() + " logged off");
         String offlineMsg = this.getClientName() + " logged off\n";

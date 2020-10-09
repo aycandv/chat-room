@@ -40,4 +40,7 @@ public class Server extends Thread{
         }
     }
 
+    public void removeClient(ServerThread serverThread) {
+        this.getClientList().remove(serverThread);
+    }
 }
