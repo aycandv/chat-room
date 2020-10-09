@@ -8,13 +8,13 @@ import java.util.List;
 
 public class Server extends Thread{
     private final int serverPort;
-    private List<Client> clientList = new ArrayList<>();
+    private List<ServerThread> clientList = new ArrayList<>();
 
     public Server(int port) {
         this.serverPort = port;
     }
 
-    public List<Client> getClientList() {
+    public List<ServerThread> getClientList() {
         return clientList;
     }
 
@@ -31,7 +31,7 @@ public class Server extends Thread{
                 System.out.println("Waiting for new clients...");
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Accepted connection from " + clientSocket);
-                Client client = new Client(this, clientSocket);
+                ServerThread client = new ServerThread(this, clientSocket);
                 clientList.add(client);
                 client.start();
             }

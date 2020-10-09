@@ -3,14 +3,14 @@ package com.avit;
 import java.io.*;
 import java.net.Socket;
 
-public class Client extends Thread {
+public class ServerThread extends Thread {
 
     private final Socket clientSocket;
     private final Server server;
     private String name = null;
     private OutputStream outputStream;
 
-    public Client(Server server, Socket clientSocket) {
+    public ServerThread(Server server, Socket clientSocket) {
         this.server = server;
         this.clientSocket = clientSocket;
     }
@@ -59,7 +59,7 @@ public class Client extends Thread {
         this.send("You are logged off\n");
         System.out.println(this.getClientName() + " logged off");
         String offlineMsg = this.getClientName() + " logged off\n";
-        for (Client client : server.getClientList()) {
+        for (ServerThread client : server.getClientList()) {
             if (client.getClientName() != null) {
                 if (client.getClientName().equals(this.name)) continue;
                 client.send(offlineMsg);
@@ -78,13 +78,13 @@ public class Client extends Thread {
             String password = tokens[2];
 
             if ((name.equals("guest") && password.equals("guest")) || (name.equals("aycan") && password.equals("1234"))) {
-                String msg = "You are logged in\n";
+                String msg = "You logged in\n";
                 outputStream.write(msg.getBytes());
                 this.name = name;
                 System.out.println("User logged in successfully: " + name + "\n");
 
                 if (server.getClientList().size() > 1) {
-                    for (Client client : server.getClientList()) {
+                    for (ServerThread client : server.getClientList()) {
                         if (client.getClientName() != null) {
                             if (client.getClientName().equals(this.name)) continue;
                             send(client.getClientName() + " is online\n");
@@ -93,7 +93,7 @@ public class Client extends Thread {
                 }
 
                 String onlineMsg = name + " logged in\n";
-                for (Client client : server.getClientList()) {
+                for (ServerThread client : server.getClientList()) {
                     if (client.getClientName() != null) {
                         if (client.getClientName().equals(this.name)) continue;
                         client.send(onlineMsg);
