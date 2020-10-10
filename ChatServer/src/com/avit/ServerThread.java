@@ -48,6 +48,8 @@ public class ServerThread extends Thread {
                     handleMessage(tokens);
                 } else if ("join".equalsIgnoreCase(cmd)) {
                     handleJoin(tokens);
+                } else if ("leave".equalsIgnoreCase(cmd)) {
+                    handleLeave(tokens);
                 }
                 else {
                     String msg = "Unknown command: " + cmd + "\n";
@@ -58,6 +60,13 @@ public class ServerThread extends Thread {
         }
 
         clientSocket.close();
+    }
+
+    private void handleLeave(String[] tokens) {
+        if (tokens.length > 1) {
+            String groupName = tokens[1];
+            groupSet.remove(groupName);
+        }
     }
 
     private void handleJoin(String[] tokens) {
@@ -79,27 +88,24 @@ public class ServerThread extends Thread {
         for (ServerThread client : server.getClientList()) {
             if (isGroupMsg) {
                 if (client.isMemberOf(targetUser)) {
-                    StringBuilder msg = new StringBuilder(" ");
+                    StringBuilder msg = new StringBuilder("");
                     for (int i = 2; i < tokens.length; i++) {
                         msg.append(" ").append(tokens[i]);
                     }
-                    String out = "(" + tokens[1] + ") " + this.getClientName() + " >" + msg + "\n";
-                    if (!client.getClientName().equals(this.getClientName()) && client.getClientName() != null) client.send(out);
-                    out = "(" + tokens[1] + ") You >" + msg + "\n";
-                    this.send(out);
+                    String out = "msg " + tokens[1] + ":" + this.getClientName() + msg + "\n";
+                    if (client.getClientName() != null) client.send(out);
                 }
             }
             else {
                 if (client.getClientName().equalsIgnoreCase(targetUser)) {
-                    StringBuilder msg = new StringBuilder(" ");
+                    StringBuilder msg = new StringBuilder("");
                     for (int i = 2; i < tokens.length; i++) {
                         msg.append(" ").append(tokens[i]);
                     }
-                    String out = this.getClientName() + ">" + msg + "\n";
+                    String out = "msg " + this.getClientName() + msg + "\n";
                     client.send(out);
                 }
             }
-
         }
     }
 
